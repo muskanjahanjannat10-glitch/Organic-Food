@@ -16,6 +16,7 @@ import { LocationCustomizerModal } from './components/LocationCustomizerModal';
 import { CartDrawer } from './components/CartDrawer';
 import { WishlistDrawer } from './components/WishlistDrawer';
 import { AdminPanelModal } from './components/AdminPanelModal';
+import { FirebaseStatusModal } from './components/FirebaseStatusModal';
 import { LOCATION_PRESETS, ORGANIC_PRODUCTS, CUSTOMER_REVIEWS, DEFAULT_BANNER_CONFIG, generateLocalBusinessSchema } from './data/storeData';
 import { BusinessLocation, ProductItem, BannerConfig, Language } from './types';
 
@@ -81,6 +82,7 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState<boolean>(false);
   const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false);
+  const [isFirebaseModalOpen, setIsFirebaseModalOpen] = useState<boolean>(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false);
   const [isSeoModalOpen, setIsSeoModalOpen] = useState<boolean>(false);
   const [activeSection, setActiveSection] = useState<string>('home');
@@ -96,12 +98,15 @@ export default function App() {
     }
   };
 
-  // Secret URL Hash Listener: typing /#admin or clicking # in URL opens Admin Panel
+  // URL Hash Listener: #admin or #firebase
   useEffect(() => {
     const handleCheckHash = () => {
       const hash = window.location.hash.toLowerCase();
       if (hash === '#admin' || hash === '#/admin' || hash === '#owner') {
         setIsAdminOpen(true);
+      }
+      if (hash === '#firebase' || hash === '#/firebase' || hash === '#cloud') {
+        setIsFirebaseModalOpen(true);
       }
     };
 
@@ -242,6 +247,7 @@ export default function App() {
         onOpenAdmin={() => setIsAdminOpen(true)}
         onOpenLocationModal={() => setIsLocationModalOpen(true)}
         onOpenSeoModal={() => setIsSeoModalOpen(true)}
+        onOpenFirebaseModal={() => setIsFirebaseModalOpen(true)}
         activeSection={activeSection}
         setActiveSection={scrollToSection}
       />
@@ -299,6 +305,7 @@ export default function App() {
         currentLang={currentLang}
         onOpenSeoModal={() => setIsSeoModalOpen(true)}
         onOpenLocationModal={() => setIsLocationModalOpen(true)}
+        onOpenFirebaseModal={() => setIsFirebaseModalOpen(true)}
       />
 
       {/* Modals & Slide-over Drawers */}
@@ -349,6 +356,13 @@ export default function App() {
         currentLang={currentLang}
         onUpdateQuantity={handleUpdateQuantity}
         onClearCart={handleClearCart}
+        onOpenFirebaseModal={() => setIsFirebaseModalOpen(true)}
+      />
+
+      <FirebaseStatusModal
+        isOpen={isFirebaseModalOpen}
+        onClose={() => setIsFirebaseModalOpen(false)}
+        currentLang={currentLang}
       />
 
     </div>

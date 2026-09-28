@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, MapPin, CodeXml, Heart, Lock } from 'lucide-react';
+import { ShoppingBag, MapPin, CodeXml, Heart, Lock, Flame } from 'lucide-react';
 import { BusinessLocation, Language } from '../types';
 import { TRANSLATIONS } from '../data/translations';
 import { LanguageToggle } from './LanguageToggle';
@@ -15,6 +15,7 @@ interface NavbarProps {
   onOpenAdmin: () => void;
   onOpenLocationModal: () => void;
   onOpenSeoModal: () => void;
+  onOpenFirebaseModal: () => void;
   activeSection: string;
   setActiveSection: (sec: string) => void;
 }
@@ -30,6 +31,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAdmin,
   onOpenLocationModal,
   onOpenSeoModal,
+  onOpenFirebaseModal,
   activeSection,
   setActiveSection
 }) => {
@@ -95,6 +97,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             currentLang={currentLang}
             onToggle={onToggleLang}
           />
+
+          {/* Firebase Connection Status Button */}
+          <button
+            onClick={onOpenFirebaseModal}
+            title="Firebase Cloud Sync Status (organic-food-88c3a)"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-lg transition-colors shadow-2xs"
+          >
+            <Flame className="w-3.5 h-3.5 text-amber-600 fill-amber-500 animate-pulse" />
+            <span className="font-mono text-[11px] font-bold">Firebase</span>
+          </button>
 
           {/* Location Switcher Button */}
           <button

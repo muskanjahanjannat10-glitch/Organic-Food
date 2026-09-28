@@ -8,13 +8,15 @@ interface FooterProps {
   currentLang: Language;
   onOpenSeoModal: () => void;
   onOpenLocationModal: () => void;
+  onOpenFirebaseModal: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   location,
   currentLang,
   onOpenSeoModal,
-  onOpenLocationModal
+  onOpenLocationModal,
+  onOpenFirebaseModal
 }) => {
   const t = TRANSLATIONS[currentLang];
 
@@ -114,10 +116,15 @@ export const Footer: React.FC<FooterProps> = ({
             </a>
           </p>
           <div className="flex flex-wrap items-center gap-4">
-            <span className="inline-flex items-center gap-1.5 text-[11px] text-amber-300 bg-amber-950/40 border border-amber-500/20 px-2 py-0.5 rounded-full font-mono">
+            <button
+              onClick={onOpenFirebaseModal}
+              title="Click to inspect Firebase Cloud Sync (organic-food-88c3a)"
+              className="inline-flex items-center gap-1.5 text-[11px] text-amber-300 hover:text-amber-200 bg-amber-950/60 hover:bg-amber-950 border border-amber-500/40 hover:border-amber-400 px-2.5 py-1 rounded-full font-mono transition-all cursor-pointer shadow-xs"
+            >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
               <span>Firebase: organic-food-88c3a</span>
-            </span>
+              <span className="text-[9px] bg-amber-500/20 px-1 rounded text-amber-300">চেক করুন</span>
+            </button>
             <span className="flex items-center gap-1 text-emerald-400">
               <CheckCircle className="w-3.5 h-3.5" />
               <span>{t.footer.badge}</span>

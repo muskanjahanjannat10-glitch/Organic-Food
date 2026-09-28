@@ -13,6 +13,7 @@ interface CartDrawerProps {
   currentLang: Language;
   onUpdateQuantity: (productId: string, delta: number) => void;
   onClearCart: () => void;
+  onOpenFirebaseModal?: () => void;
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
@@ -23,10 +24,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   location,
   currentLang,
   onUpdateQuantity,
-  onClearCart
+  onClearCart,
+  onOpenFirebaseModal
 }) => {
   const [orderConfirmed, setOrderConfirmed] = useState<boolean>(false);
   const [placedOrderId, setPlacedOrderId] = useState<string>('');
+  const [syncStatus, setSyncStatus] = useState<{ synced: boolean; error?: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [pickupSlot, setPickupSlot] = useState<string>('express-pickup');
   const [deliveryType, setDeliveryType] = useState<'pickup' | 'delivery'>('pickup');
@@ -86,6 +89,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     });
 
     setPlacedOrderId(result.orderId);
+    setSyncStatus({ synced: !result.cloudSyncFailed, error: result.error });
     setIsSubmitting(false);
     setOrderConfirmed(true);
   };
@@ -154,9 +158,34 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     <span>{t.cart.helpline}</span>
                     <span className="font-mono">{location.phone}</span>
                   </div>
-                  <div className="pt-1.5 border-t border-emerald-200/60 flex items-center justify-between text-[11px] text-emerald-800">
-                    <span>Firebase Firestore Status:</span>
-                    <span className="font-medium text-emerald-900 bg-emerald-100 px-2 py-0.5 rounded">Synced to Cloud</span>
+                  <div className="pt-2 border-t border-emerald-200/60 space-y-1.5 text-[11px]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-stone-700 font-medium">Firebase Cloud:</span>
+                      {syncStatus?.synced ? (
+                        <span className="font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                          <span>Synced to Cloud</span>
+                        </span>
+                      ) : (
+                        <span className="font-semibold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+                          <span>Saved Locally (Cloud Locked)</span>
+                        </span>
+                      )}
+                    </div>
+                    {!syncStatus?.synced && onOpenFirebaseModal && (
+                      <div className="bg-amber-50 border border-amber-200 p-2 rounded-lg text-amber-900 text-[11px] leading-relaxed">
+                        <p>Firebase Console-এ সিকিউরিটি রুলস লক থাকায় ক্লাউডে সেভ হয়নি।</p>
+                        <button
+                          type="button"
+                          onClick={onOpenFirebaseModal}
+                          className="mt-1 text-emerald-800 font-bold underline hover:text-emerald-950 flex items-center gap-1"
+                        >
+                          <span>কীভাবে ১ মিনিটে আনলক করবেন দেখুন</span>
+                          <span>&rarr;</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -61,17 +61,71 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   return errInfo;
 }
 
+export interface FirebaseConnectionStatus {
+  success: boolean;
+  code: 'CONNECTED_READY' | 'PERMISSION_DENIED' | 'NOT_INITIALIZED' | 'OFFLINE' | 'UNKNOWN';
+  message: string;
+  details?: string;
+  latencyMs?: number;
+}
+
 // Test Connection
-export async function testFirebaseConnection(): Promise<{ success: boolean; message: string }> {
+export async function testFirebaseConnection(): Promise<FirebaseConnectionStatus> {
+  const startTime = Date.now();
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-    return { success: true, message: `Connected to Firebase (${firebaseConfig.projectId})` };
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      return { success: false, message: 'Client is offline or network is disconnected' };
+    const pingDoc = doc(db, '_connection_test', 'ping');
+    await setDoc(pingDoc, {
+      pingAt: new Date().toISOString(),
+      client: 'organic-food-web',
+      status: 'active'
+    });
+    const latency = Date.now() - startTime;
+    return {
+      success: true,
+      code: 'CONNECTED_READY',
+      latencyMs: latency,
+      message: `Firebase Project (${firebaseConfig.projectId}) সফলভাবে সংযুক্ত এবং ডেটা সেভ করার জন্য সম্পূর্ণ সক্রিয়!`
+    };
+  } catch (error: any) {
+    const latency = Date.now() - startTime;
+    const errStr = error?.message || String(error);
+    const code = error?.code || '';
+
+    if (code === 'permission-denied' || errStr.includes('PERMISSION_DENIED') || errStr.includes('Missing or insufficient permissions')) {
+      return {
+        success: false,
+        code: 'PERMISSION_DENIED',
+        latencyMs: latency,
+        message: `গুগল সার্ভারে কানেক্ট হয়েছে, কিন্তু আপনার Firebase Console-এ রুলস লক করা আছে (Permission Denied)।`,
+        details: 'Firebase Console -> Firestore Database -> Rules ট্যাবে গিয়ে রুলস পরিবর্তন করে allow read, write: if true; দিতে হবে।'
+      };
     }
-    // Permissions error still proves connection reached Firebase server!
-    return { success: true, message: `Server reached: Firebase project ${firebaseConfig.projectId} is active` };
+
+    if (code === 'failed-precondition' || errStr.includes('not found') || errStr.includes('database')) {
+      return {
+        success: false,
+        code: 'NOT_INITIALIZED',
+        latencyMs: latency,
+        message: `Firestore ডেটাবেস এখনও তৈরি করা হয়নি।`,
+        details: 'Firebase Console-এ গিয়ে "Firestore Database" ট্যাবে ক্লিক করে "Create Database" নির্বাচন করুন।'
+      };
+    }
+
+    if (errStr.includes('offline') || code === 'unavailable') {
+      return {
+        success: false,
+        code: 'OFFLINE',
+        latencyMs: latency,
+        message: 'ইন্টারনেট সংযোগ নেই অথবা ব্রাউজার ক্লায়েন্ট অফলাইন।',
+      };
+    }
+
+    return {
+      success: false,
+      code: 'UNKNOWN',
+      latencyMs: latency,
+      message: `কানেকশন মেসেজ: ${errStr}`
+    };
   }
 }
 
@@ -145,7 +199,7 @@ export async function saveOrderToFirestore(orderData: {
   deliveryType: 'pickup' | 'delivery';
   pickupSlot: string;
   paymentMethod: string;
-}): Promise<{ success: boolean; orderId: string; cloudSyncFailed?: boolean }> {
+}): Promise<{ success: boolean; orderId: string; cloudSyncFailed?: boolean; error?: string }> {
   const orderId = `ord-${Date.now()}`;
   const now = new Date().toISOString();
   
@@ -156,12 +210,14 @@ export async function saveOrderToFirestore(orderData: {
   };
 
   let syncedToCloud = false;
+  let syncError: string | undefined = undefined;
 
   try {
     const orderDocRef = doc(db, 'orders', orderId);
     await setDoc(orderDocRef, payload);
     syncedToCloud = true;
-  } catch (err) {
+  } catch (err: any) {
+    syncError = err?.message || String(err);
     handleFirestoreError(err, OperationType.CREATE, `orders/${orderId}`);
   }
 
@@ -180,7 +236,43 @@ export async function saveOrderToFirestore(orderData: {
     console.warn('Could not cache order locally:', e);
   }
 
-  return { success: true, orderId, cloudSyncFailed: !syncedToCloud };
+  return { success: true, orderId, cloudSyncFailed: !syncedToCloud, error: syncError };
+}
+
+// Send a test order directly to verify Firebase cloud write
+export async function sendTestOrderToFirebase(): Promise<{ success: boolean; orderId?: string; error?: string }> {
+  const orderId = `test-ord-${Date.now()}`;
+  const testPayload = {
+    customerName: 'Firebase Test User (লাইভ টেস্ট)',
+    customerPhone: '01712345678',
+    customerAddress: 'Dhaka, Bangladesh',
+    items: [{ id: 'p1', name: 'Fresh Organic Spinach', qty: 1, price: 65 }],
+    subtotal: 65,
+    deliveryFee: 60,
+    total: 125,
+    deliveryType: 'delivery' as const,
+    pickupSlot: 'Morning Slot (8:00 AM - 12:00 PM)',
+    paymentMethod: 'cod',
+    status: 'pending' as const,
+    createdAt: new Date().toISOString(),
+  };
+
+  try {
+    const testDocRef = doc(db, 'orders', orderId);
+    await setDoc(testDocRef, testPayload);
+
+    // Save to local cache as well
+    try {
+      const localSaved = localStorage.getItem('organic_food_recent_orders');
+      const orders: StoredOrder[] = localSaved ? JSON.parse(localSaved) : [];
+      orders.unshift({ id: orderId, ...testPayload, syncedToCloud: true });
+      localStorage.setItem('organic_food_recent_orders', JSON.stringify(orders.slice(0, 50)));
+    } catch {}
+
+    return { success: true, orderId };
+  } catch (err: any) {
+    return { success: false, error: err?.message || String(err) };
+  }
 }
 
 // Save Inquiry to Firestore + Local backup
@@ -190,7 +282,7 @@ export async function saveInquiryToFirestore(inquiryData: {
   email?: string;
   inquiryType: string;
   notes?: string;
-}): Promise<{ success: boolean; inquiryId: string; cloudSyncFailed?: boolean }> {
+}): Promise<{ success: boolean; inquiryId: string; cloudSyncFailed?: boolean; error?: string }> {
   const inquiryId = `inq-${Date.now()}`;
   const now = new Date().toISOString();
   const payload = {
@@ -199,12 +291,14 @@ export async function saveInquiryToFirestore(inquiryData: {
   };
 
   let syncedToCloud = false;
+  let syncError: string | undefined = undefined;
 
   try {
     const inqDocRef = doc(db, 'inquiries', inquiryId);
     await setDoc(inqDocRef, payload);
     syncedToCloud = true;
-  } catch (err) {
+  } catch (err: any) {
+    syncError = err?.message || String(err);
     handleFirestoreError(err, OperationType.CREATE, `inquiries/${inquiryId}`);
   }
 
@@ -223,7 +317,7 @@ export async function saveInquiryToFirestore(inquiryData: {
     console.warn('Could not cache inquiry locally:', e);
   }
 
-  return { success: true, inquiryId, cloudSyncFailed: !syncedToCloud };
+  return { success: true, inquiryId, cloudSyncFailed: !syncedToCloud, error: syncError };
 }
 
 // Fetch Orders for Admin Panel
