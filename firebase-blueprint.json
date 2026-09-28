@@ -1,0 +1,69 @@
+{
+  "entities": {
+    "Order": {
+      "title": "Order",
+      "description": "Customer farm harvest pickup and delivery order",
+      "type": "object",
+      "properties": {
+        "customerName": { "type": "string", "maxLength": 100 },
+        "customerPhone": { "type": "string", "maxLength": 30 },
+        "customerAddress": { "type": "string", "maxLength": 300 },
+        "total": { "type": "number" },
+        "subtotal": { "type": "number" },
+        "deliveryFee": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["cod", "bkash"] },
+        "deliveryType": { "type": "string", "enum": ["pickup", "delivery"] },
+        "pickupSlot": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["customerName", "customerPhone", "total", "paymentMethod", "deliveryType", "status", "createdAt"]
+    },
+    "Inquiry": {
+      "title": "Inquiry",
+      "description": "Customer inquiry or harvest box reservation",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "email": { "type": "string", "maxLength": 150 },
+        "inquiryType": { "type": "string", "maxLength": 50 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["fullName", "phone", "createdAt"]
+    },
+    "BannerConfig": {
+      "title": "BannerConfig",
+      "description": "Live custom promotional banner for Organic Food",
+      "type": "object",
+      "properties": {
+        "kicker": { "type": "string", "maxLength": 200 },
+        "headlinePrefix": { "type": "string", "maxLength": 200 },
+        "headlineHighlight": { "type": "string", "maxLength": 100 },
+        "subheadline": { "type": "string", "maxLength": 1000 },
+        "promoBadge": { "type": "string", "maxLength": 150 },
+        "featuredProduceTitle": { "type": "string", "maxLength": 150 },
+        "featuredProduceSubtitle": { "type": "string", "maxLength": 250 },
+        "featuredProducePrice": { "type": "string", "maxLength": 50 },
+        "featuredEmoji": { "type": "string", "maxLength": 10 },
+        "bgGradientStyle": { "type": "string", "enum": ["dark-emerald", "warm-harvest", "deep-forest", "earth-terracotta"] }
+      },
+      "required": ["kicker", "headlinePrefix", "subheadline"]
+    }
+  },
+  "firestore": {
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Collection of customer curbside and delivery orders"
+    },
+    "/inquiries/{inquiryId}": {
+      "schema": { "$ref": "#/entities/Inquiry" },
+      "description": "Collection of incoming messages and inquiries"
+    },
+    "/settings/banner": {
+      "schema": { "$ref": "#/entities/BannerConfig" },
+      "description": "Storewide promotional banner settings"
+    }
+  }
+}

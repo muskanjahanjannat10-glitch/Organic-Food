@@ -1,0 +1,6 @@
+{
+  "name": "Verdant Roots Organic Market - Local SEO Hub",
+  "description": "High-performance local organic food market web application with full local SEO architecture, Google Maps integration, LocalBusiness JSON-LD schema, sitemap generator, and WordPress deployment toolkit.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

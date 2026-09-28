@@ -1,0 +1,28 @@
+# Robots.txt for Organic Food Bangladesh
+# Optimized for Googlebot and major search engines
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /api/
+Disallow: /*?search=*
+Disallow: /*?filter=*
+
+# Allow search engine crawlers full access to static assets
+Allow: /images/
+Allow: /css/
+Allow: /js/
+Allow: /*.js$
+Allow: /*.css$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.svg$
+Allow: /*.webp$
+
+# Crawl Delay
+Crawl-delay: 1
+
+# XML Sitemap Location
+Sitemap: https://www.organicfood.com.bd/sitemap.xml

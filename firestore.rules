@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net - Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Helper Primitives
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Orders Collection
+    match /orders/{orderId} {
+      allow create: if isValidId(orderId)
+        && incoming().customerName is string && incoming().customerName.size() > 0 && incoming().customerName.size() <= 100
+        && incoming().customerPhone is string && incoming().customerPhone.size() > 0 && incoming().customerPhone.size() <= 30
+        && incoming().total is number && incoming().total >= 0
+        && incoming().deliveryType in ['pickup', 'delivery']
+        && incoming().paymentMethod in ['cod', 'bkash']
+        && incoming().status == 'pending';
+      allow read, update, delete: if isSignedIn();
+    }
+
+    // Inquiries Collection
+    match /inquiries/{inquiryId} {
+      allow create: if isValidId(inquiryId)
+        && incoming().fullName is string && incoming().fullName.size() > 0 && incoming().fullName.size() <= 100
+        && incoming().phone is string && incoming().phone.size() > 0 && incoming().phone.size() <= 30;
+      allow read, update, delete: if isSignedIn();
+    }
+
+    // Settings Collection (Banner and Products)
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+  }
+}
