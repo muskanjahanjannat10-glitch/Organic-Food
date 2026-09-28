@@ -113,7 +113,11 @@ export const Footer: React.FC<FooterProps> = ({
               #
             </a>
           </p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <span className="inline-flex items-center gap-1.5 text-[11px] text-amber-300 bg-amber-950/40 border border-amber-500/20 px-2 py-0.5 rounded-full font-mono">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Firebase: organic-food-88c3a</span>
+            </span>
             <span className="flex items-center gap-1 text-emerald-400">
               <CheckCircle className="w-3.5 h-3.5" />
               <span>{t.footer.badge}</span>
